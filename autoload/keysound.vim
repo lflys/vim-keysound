@@ -26,7 +26,8 @@ if !exists('g:keysound_replace')
 endif
 
 if !exists('g:keysound_volume')
-	let g:keysound_volume = 450
+	let g:keysound_volume = 65535
+    " 65535 means 100% volume in paplay
 endif
 
 
@@ -41,17 +42,6 @@ function! keysound#errmsg(msg)
 endfunc
 
 let s:themes = {}
-
-
-"----------------------------------------------------------------------
-" play a sound
-"----------------------------------------------------------------------
-function! keysound#playsound(filename, ...)
-	let s:volume = (a:0 > 0)? a:1 : 1000
-	let s:channel = (a:0 > 1)? a:2 : -1
-	let s:filename = a:filename
-    call sound_playfile(s:filename)
-endfunc
 
 
 "----------------------------------------------------------------------
@@ -72,7 +62,8 @@ endfunc
 "----------------------------------------------------------------------
 function! s:play(filename, ...)
 	let theme = g:keysound_theme
-	let volume = (a:0 > 0)? a:1 : 1000
+	let volume = (a:0 > 0)? a:1 : 65535
+    " 65535 means 100% volume in paplay
 	let channel = (a:0 > 1)? a:2 : -1
 	if has_key(s:themes, theme)
 		let path = s:themes[theme]
@@ -89,7 +80,8 @@ function! s:play(filename, ...)
 		call keysound#errmsg('ERROR: not find "'. a:filename.'" in "'.path.'"')
 		return
 	endif
-	call keysound#playsound(fn, volume, channel)
+    call job_start('paplay' .. ' ' .. '--volume=' .. volume .. ' ' .. fn)
+    " paplay 可以在Unix平台上使用，对于其他的平台，可以参考killsheep项目
 endfunc
 
 
