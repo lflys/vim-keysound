@@ -44,22 +44,11 @@ let s:themes = {}
 
 
 "----------------------------------------------------------------------
-" play a sound
-"----------------------------------------------------------------------
-function! keysound#playsound(filename, ...)
-	let s:volume = (a:0 > 0)? a:1 : 1000
-	let s:channel = (a:0 > 1)? a:2 : -1
-	let s:filename = a:filename
-    call sound_playfile(s:filename)
-endfunc
-
-
-"----------------------------------------------------------------------
 " choose_theme 
 "----------------------------------------------------------------------
 function! s:choose_theme(theme)
 	for rtp in split(&rtp, ',')
-        let s:path = fnamemodify(rtp, ':p') . '/sounds/' . a:theme . '/'
+        let s:path = fnamemodify(rtp, ':p') .. '/sounds/' .. a:theme .. '/'
 		if isdirectory(s:path)
 			return s:path
 		endif
@@ -72,8 +61,6 @@ endfunc
 "----------------------------------------------------------------------
 function! s:play(filename, ...)
 	let theme = g:keysound_theme
-	let volume = (a:0 > 0)? a:1 : 1000
-	let channel = (a:0 > 1)? a:2 : -1
 	if has_key(s:themes, theme)
 		let path = s:themes[theme]
 	else
@@ -81,15 +68,15 @@ function! s:play(filename, ...)
 		let s:themes[theme] = path
 	endif
 	if path == ''
-		call keysound#errmsg('ERROR: can not find theme "sounds/'. theme. '" folder in runtimepaths')
+		call keysound#errmsg('ERROR: can not find theme "sounds/'.. theme.. '" folder in runtimepaths')
 		return 
 	endif
-	let fn = path . '/' . a:filename
+	let fn = path .. '/' .. a:filename
 	if !filereadable(fn)
-		call keysound#errmsg('ERROR: not find "'. a:filename.'" in "'.path.'"')
+		call keysound#errmsg('ERROR: not find "'.. a:filename..'" in "'..path..'"')
 		return
 	endif
-	call keysound#playsound(fn, volume, channel)
+	call sound_playfile(fn)
 endfunc
 
 
@@ -110,18 +97,17 @@ function! keysound#init() abort
 endfunc
 
 function! keysound#play(key)
-	let volume = g:keysound_volume - s:random(g:keysound_volume / 5)
 	if a:key == "\n"
 		if g:keysound_replace == 0
-			call s:play('keyenter.wav', volume)
+			call s:play('keyenter.wav')
 		else
-			call s:play('keyenter.wav', volume, 0)
+			call s:play('keyenter.wav')
 		endif
 	else
 		if g:keysound_replace == 0
-			call s:play('keyany.wav', volume)
+			call s:play('keyany.wav')
 		else
-			call s:play('keyany.wav', volume, 1)
+			call s:play('keyany.wav')
 		endif
 	endif
 endfunc
