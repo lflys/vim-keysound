@@ -3,7 +3,9 @@
 " keysound.vim - 
 "
 " Created by skywind on 2018/05/01
-" Last Modified: 2018/05/01 18:20:28
+" Updated by lflys on 2020/11/17
+"
+" This script is updated with new sound feature bought by vim 8.2
 "
 "======================================================================
 
@@ -38,84 +40,7 @@ function! keysound#errmsg(msg)
 	echohl NONE
 endfunc
 
-
-"----------------------------------------------------------------------
-" python init 
-"----------------------------------------------------------------------
-let s:scripthome = expand('<sfile>:p:h')
-let s:py_cmd = ''
-let s:py_eval = ''
-let s:py_version = 0
-
-if g:keysound_py_version == 0
-	if has('python')
-		let s:py_cmd = 'py'
-		let s:py_eval = 'pyeval'
-		let s:py_version = 2
-	elseif has('python3')
-		let s:py_cmd = 'py3'
-		let s:py_eval = 'py3eval'
-		let s:py_version = 3
-	else
-		call keysound#errmsg('vim does not support +python/+python3 feature')
-	endif
-elseif g:keysound_py_version == 2
-	if has('python')
-		let s:py_cmd = 'py'
-		let s:py_eval = 'pyeval'
-		let s:py_version = 2
-	else
-		call keysound#errmsg('vim does not support +python feature')
-	endif
-elseif g:keysound_py_version == 3
-	if has('python3')
-		let s:py_cmd = 'py3'
-		let s:py_eval = 'py3eval'
-		let s:py_version = 3
-	else
-		call keysound#errmsg('vim does not support +python3 feature')
-	endif
-endif
-
-function! s:python(script)
-	exec s:py_cmd a:script
-endfunc
-
-function! s:pyeval(script)
-	if s:py_version == 2
-		return pyeval(a:script)
-	else
-		return py3eval(a:script)
-	endif
-endfunc
-
-
-"----------------------------------------------------------------------
-" local init
-"----------------------------------------------------------------------
-call s:python('import sys')
-call s:python('import os')
-call s:python('import vim')
-call s:python('import random')
-call s:python('sys.path.append(vim.eval("s:scripthome"))')
-
-let g:keysound#inited = 0
 let s:themes = {}
-
-
-"----------------------------------------------------------------------
-" init import
-"----------------------------------------------------------------------
-function! s:init()
-	if s:py_cmd == ''
-		return 0
-	endif
-	if g:keysound#inited == 0
-		call s:python('import keysound')
-		let g:keysound#inited = 1
-	endif
-	return 1
-endfunc
 
 
 "----------------------------------------------------------------------
@@ -125,10 +50,7 @@ function! keysound#playsound(filename, ...)
 	let s:volume = (a:0 > 0)? a:1 : 1000
 	let s:channel = (a:0 > 1)? a:2 : -1
 	let s:filename = a:filename
-	call s:init()
-	call s:python('v = int(vim.eval("s:volume")) * 0.001')
-	call s:python('c = int(vim.eval("s:channel"))')
-	call s:python('keysound.playsound(vim.eval("s:filename"), v, c)')
+    call sound_playfile(s:filename)
 endfunc
 
 
@@ -137,10 +59,7 @@ endfunc
 "----------------------------------------------------------------------
 function! s:choose_theme(theme)
 	for rtp in split(&rtp, ',')
-		let s:path = fnamemodify(rtp, ':p')
-		let s:join = 'sounds/' . a:theme
-		let s:path = s:pyeval("os.path.join(vim.eval('s:path'), vim.eval('s:join'))")
-		let s:path = s:pyeval("os.path.abspath(vim.eval('s:path'))")
+        let s:path = fnamemodify(rtp, ':p') . '/sounds/' . a:theme . '/'
 		if isdirectory(s:path)
 			return s:path
 		endif
@@ -174,21 +93,20 @@ function! s:play(filename, ...)
 endfunc
 
 
-
 "----------------------------------------------------------------------
 " choose volume 
 "----------------------------------------------------------------------
 function! s:random(range)
 	let s:range = a:range
-	return s:pyeval('random.randint(0, int(vim.eval("s:range")))')
+    return rand(srand()) % s:range
 endfunc
 
 function! keysound#init() abort
-	if s:init() == 0
-		return 0
-	endif
-	call s:python('keysound.playsound("")')
-	return 1
+    if has('sound')
+        return 1
+    else
+        errmsg('This vim is not compiled with the +sound feature')
+        return 0
 endfunc
 
 function! keysound#play(key)
@@ -207,6 +125,5 @@ function! keysound#play(key)
 		endif
 	endif
 endfunc
-
 
 
